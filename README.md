@@ -13,7 +13,7 @@ ChessTime is a web-app that allows users to track their time spent on chess.com.
 
 Clone the repository to your local machine
 ```bash
-git clone https://github.com/krishras23/chesstime.git
+git clone https://github.com/krishras23/chess-time.git
 
 ```
 Install the dependencies
