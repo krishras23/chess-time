@@ -4,8 +4,6 @@ import MadeWithLove from 'react-made-with-love'
 import "./App.css";
 import {Helmet} from "react-helmet";
 
-
-
 function App() {
   const [result, setResult] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +16,16 @@ function App() {
     let totalHours = 0;
     let totalMinutes = 0;
     const table = [];
-    for (let month = 1; month <= 12; month++) {
+
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; 
+    let endMonth = 12;
+    if (year == currentYear) {
+      endMonth = currentMonth;
+    }
+
+    for (let month = 1; month <= endMonth; month++) {
       const monthString = month.toString().padStart(2, "0");
       const url = `https://api.chess.com/pub/player/${username}/games/${year}/${monthString}`;
       const response = await fetch(url);
@@ -46,7 +53,7 @@ function App() {
               endTime.setDate(endTime.getDate() + 1);
             }
             const timeDifference = (endTime - startTime) / 1000;
-            if (timeDifference < 7200) {  // only include games shorter than an hour
+            if (timeDifference < 7200) {  
               timeDifferences.push(timeDifference);
             }
           }
