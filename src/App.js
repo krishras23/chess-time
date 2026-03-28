@@ -29,49 +29,50 @@ function App() {
       const monthString = month.toString().padStart(2, "0");
       const url = `https://api.chess.com/pub/player/${username}/games/${year}/${monthString}`;
       const response = await fetch(url);
-      if (response.ok) {
-        setIsLoading(true);
-        const games = [];
-        const response_body = await response.json();
-        for (const game of response_body.games) {
-          const pgn = game.pgn?.toString();
-          if (pgn) {
-            const start_time_index = pgn.indexOf('[StartTime');
-            const end_time_index = pgn.indexOf('EndTime');
-            const start_end_times = pgn.substring(start_time_index, end_time_index + 19);
-            games.push(start_end_times);
+      if (!response.ok) {
+        if (response.status === 404) {
+          continue;
+        }
+        setIsLoading(false);
+        return "Username or date is invalid";
+      }
+      const games = [];
+      const response_body = await response.json();
+      for (const game of response_body.games) {
+        const pgn = game.pgn?.toString();
+        if (pgn) {
+          const start_time_index = pgn.indexOf('[StartTime');
+          const end_time_index = pgn.indexOf('EndTime');
+          const start_end_times = pgn.substring(start_time_index, end_time_index + 19);
+          games.push(start_end_times);
+        }
+      }
+      const timeDifferences = [];
+      for (const entry of games) {
+        const startTimeMatch = entry.match(/\[StartTime\s+"(\d\d:\d\d:\d\d)"\]/);
+        const endTimeMatch = entry.match(/\[EndTime\s+"(\d\d:\d\d:\d\d)"\]/);
+        if (startTimeMatch && endTimeMatch) {
+          const startTime = new Date(`1970-01-01T${startTimeMatch[1]}Z`);
+          const endTime = new Date(`1970-01-01T${endTimeMatch[1]}Z`);
+          if (endTime < startTime) {
+            endTime.setDate(endTime.getDate() + 1);
+          }
+          const timeDifference = (endTime - startTime) / 1000;
+          if (timeDifference < 7200) {
+            timeDifferences.push(timeDifference);
           }
         }
-        const timeDifferences = [];
-        for (const entry of games) {
-          const startTimeMatch = entry.match(/\[StartTime\s+"(\d\d:\d\d:\d\d)"\]/);
-          const endTimeMatch = entry.match(/\[EndTime\s+"(\d\d:\d\d:\d\d)"\]/);
-          if (startTimeMatch && endTimeMatch) {
-            const startTime = new Date(`1970-01-01T${startTimeMatch[1]}Z`);
-            const endTime = new Date(`1970-01-01T${endTimeMatch[1]}Z`);
-            if (endTime < startTime) {
-              endTime.setDate(endTime.getDate() + 1);
-            }
-            const timeDifference = (endTime - startTime) / 1000;
-            if (timeDifference < 7200) {  
-              timeDifferences.push(timeDifference);
-            }
-          }
-          }
-          const seconds = timeDifferences.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
-          const hours = Math.floor(seconds / 3600);
-          const minutes = Math.floor((seconds % 3600) / 60);
-          totalHours += hours
-          totalMinutes += minutes
-          table.push({
-            month: month_dict[monthString],
-            hours: hours,
-            minutes: minutes
-          });
-        } else {
-          setIsLoading(false);
-          return "Username or date is invalid";
-        }
+      }
+      const seconds = timeDifferences.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      totalHours += hours;
+      totalMinutes += minutes;
+      table.push({
+        month: month_dict[monthString],
+        hours: hours,
+        minutes: minutes
+      });
       }
       totalHours += Math.floor(totalMinutes / 60);
       totalMinutes = totalHours % 60;
